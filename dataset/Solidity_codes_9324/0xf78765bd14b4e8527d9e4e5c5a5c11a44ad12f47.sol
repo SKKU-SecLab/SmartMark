@@ -1,0 +1,908 @@
+
+
+
+pragma solidity >=0.6.0 <0.8.0;
+
+library SafeMath {
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+
+        return sub(a, b, "SafeMath: subtraction overflow");
+    }
+
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+
+        require(b <= a, errorMessage);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+
+        return div(a, b, "SafeMath: division by zero");
+    }
+
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+
+        return c;
+    }
+
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+
+        return mod(a, b, "SafeMath: modulo by zero");
+    }
+
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+
+        require(b != 0, errorMessage);
+        return a % b;
+    }
+}
+
+
+pragma solidity 0.7.6;
+
+abstract contract IRelayRecipient {
+
+    function isTrustedForwarder(address forwarder) public virtual view returns(bool);
+
+    function _msgSender() internal virtual view returns (address payable);
+
+    function versionRecipient() external virtual view returns (string memory);
+}
+
+
+pragma solidity 0.7.6;
+
+
+abstract contract BaseRelayRecipient is IRelayRecipient {
+
+    address public trustedForwarder;
+
+    modifier trustedForwarderOnly() {
+        require(msg.sender == address(trustedForwarder), "Function can only be called through the trusted Forwarder");
+        _;
+    }
+
+    function isTrustedForwarder(address forwarder) public override view returns(bool) {
+        return forwarder == trustedForwarder;
+    }
+
+    function _msgSender() internal override virtual view returns (address payable ret) {
+        if (msg.data.length >= 24 && isTrustedForwarder(msg.sender)) {
+            assembly {
+                ret := shr(96,calldataload(sub(calldatasize(),20)))
+            }
+        } else {
+            return msg.sender;
+        }
+    }
+}
+
+
+
+pragma solidity >=0.6.0 <0.8.0;
+
+interface IERC20 {
+
+    function totalSupply() external view returns (uint256);
+
+
+    function balanceOf(address account) external view returns (uint256);
+
+
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+pragma solidity >=0.6.2 <0.8.0;
+
+library Address {
+
+    function isContract(address account) internal view returns (bool) {
+
+
+        uint256 size;
+        assembly { size := extcodesize(account) }
+        return size > 0;
+    }
+
+    function sendValue(address payable recipient, uint256 amount) internal {
+
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        (bool success, ) = recipient.call{ value: amount }("");
+        require(success, "Address: unable to send value, recipient may have reverted");
+    }
+
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+
+      return functionCall(target, data, "Address: low-level call failed");
+    }
+
+    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+
+        return functionCallWithValue(target, data, 0, errorMessage);
+    }
+
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+
+        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    }
+
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+
+        require(address(this).balance >= value, "Address: insufficient balance for call");
+        require(isContract(target), "Address: call to non-contract");
+
+        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+
+        return functionStaticCall(target, data, "Address: low-level static call failed");
+    }
+
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+
+        require(isContract(target), "Address: static call to non-contract");
+
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+
+        if (success) {
+            return returndata;
+        } else {
+            if (returndata.length > 0) {
+
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                revert(errorMessage);
+            }
+        }
+    }
+}
+
+
+
+pragma solidity >=0.6.0 <0.8.0;
+
+
+
+
+library SafeERC20 {
+
+    using SafeMath for uint256;
+    using Address for address;
+
+    function safeTransfer(IERC20 token, address to, uint256 value) internal {
+
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
+    }
+
+    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
+
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
+    }
+
+    function safeApprove(IERC20 token, address spender, uint256 value) internal {
+
+        require((value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        );
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
+    }
+
+    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+
+        uint256 newAllowance = token.allowance(address(this), spender).add(value);
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+    }
+
+    function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+
+        uint256 newAllowance = token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+    }
+
+    function _callOptionalReturn(IERC20 token, bytes memory data) private {
+
+
+        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
+        if (returndata.length > 0) { // Return data is optional
+            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+        }
+    }
+}
+
+
+
+pragma solidity 0.7.6;
+
+contract ReentrancyGuard {
+
+
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor() {
+        _status = _NOT_ENTERED;
+    }
+
+    modifier nonReentrant() {
+
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        _status = _ENTERED;
+
+        _;
+
+        _status = _NOT_ENTERED;
+    }
+}
+
+
+
+pragma solidity >=0.6.0 <0.8.0;
+
+
+abstract contract Pausable {
+    event Paused(address account);
+
+    event Unpaused(address account);
+
+    event PauserChanged(
+        address indexed previousPauser,
+        address indexed newPauser
+    );
+
+    bool private _paused;
+    address private _pauser;
+
+    constructor(address pauser) {
+        require(pauser != address(0), "Pauser Address cannot be 0");
+        _pauser = pauser;
+        _paused = false;
+    }
+
+    modifier onlyPauser() {
+        require(
+            isPauser(),
+            "Only pauser is allowed to perform this operation"
+        );
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!_paused, "Pausable: paused");
+        _;
+    }
+
+    modifier whenPaused() {
+        require(_paused, "Pausable: not paused");
+        _;
+    }
+
+    function getPauser() public view returns (address) {
+        return _pauser;
+    }
+
+    function isPauser() public view returns (bool) {
+        return msg.sender == _pauser;
+    }
+
+    function isPaused() public view returns (bool) {
+        return _paused;
+    }
+
+    function changePauser(address newPauser) public onlyPauser {
+        _changePauser(newPauser);
+    }
+
+    function _changePauser(address newPauser) internal {
+        require(newPauser != address(0));
+        emit PauserChanged(_pauser, newPauser);
+        _pauser = newPauser;
+    }
+
+    function renouncePauser() external virtual onlyPauser {
+        emit PauserChanged(_pauser, address(0));
+        _pauser = address(0);
+    }
+    
+    function pause() public onlyPauser whenNotPaused {
+        _paused = true;
+        emit Paused(_pauser);
+    }
+
+    function unpause() public onlyPauser whenPaused {
+        _paused = false;
+        emit Unpaused(_pauser);
+    }
+}
+
+
+
+pragma solidity 0.7.6;
+
+abstract contract Ownable {
+    address private _owner;
+
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    constructor(address owner) {
+        require(owner != address(0), "Owner Address cannot be 0");
+        _owner = owner;
+    }
+
+    modifier onlyOwner() {
+        require(
+            isOwner(),
+            "Only contract owner is allowed to perform this operation"
+        );
+        _;
+    }
+
+    function getOwner() public view returns (address) {
+        return _owner;
+    }
+
+    function isOwner() public view returns (bool) {
+        return msg.sender == _owner;
+    }
+
+    function renounceOwnership() external virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        _transferOwnership(newOwner);
+    }
+
+    function _transferOwnership(address newOwner) internal {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+}
+
+
+
+pragma solidity 0.7.6;
+
+
+contract ExecutorManager is Ownable {
+
+    address[] internal executors;
+    mapping(address => bool) internal executorStatus;
+
+    event ExecutorAdded(address executor, address owner);
+    event ExecutorRemoved(address executor, address owner);
+
+    modifier onlyExecutor() {
+
+        require(
+            executorStatus[msg.sender],
+            "You are not allowed to perform this operation"
+        );
+        _;
+    }
+
+    constructor(address owner) Ownable(owner) {
+        require( owner != address(0), "owner cannot be zero");
+    }
+
+    function getExecutorStatus(address executor)
+        public
+        view
+        returns (bool status)
+    {
+
+        status = executorStatus[executor];
+    }
+
+    function getAllExecutors() public view returns (address[] memory) {
+
+        return executors;
+    }
+
+    function addExecutors(address[] calldata executorArray) external onlyOwner {
+
+        for (uint256 i = 0; i < executorArray.length; i++) {
+            addExecutor(executorArray[i]);
+        }
+    }
+
+    function addExecutor(address executorAddress) public onlyOwner {
+
+        require(executorAddress != address(0), "executor address can not be 0");
+        executors.push(executorAddress);
+        executorStatus[executorAddress] = true;
+        emit ExecutorAdded(executorAddress, msg.sender);
+    }
+
+    function removeExecutors(address[] calldata executorArray) external onlyOwner {
+
+        for (uint256 i = 0; i < executorArray.length; i++) {
+            removeExecutor(executorArray[i]);
+        }
+    }
+
+    function removeExecutor(address executorAddress) public onlyOwner {
+
+        require(executorAddress != address(0), "executor address can not be 0");
+        executorStatus[executorAddress] = false;
+        emit ExecutorRemoved(executorAddress, msg.sender);
+    }
+}
+
+
+pragma solidity 0.7.6;
+
+
+interface IERC20Detailed is IERC20 {
+
+  function name() external view returns(string memory);
+
+  function decimals() external view returns(uint256);
+
+}
+
+interface IERC20Nonces is IERC20Detailed {
+
+  function nonces(address holder) external view returns(uint);
+
+}
+
+interface IERC20Permit is IERC20Nonces {
+
+  function permit(address holder, address spender, uint256 nonce, uint256 expiry,
+                  bool allowed, uint8 v, bytes32 r, bytes32 s) external;
+
+
+  function permit(address holder, address spender, uint256 value, uint256 expiry,
+                  uint8 v, bytes32 r, bytes32 s) external;
+
+}
+
+
+
+pragma solidity 0.7.6;
+pragma abicoder v2;
+
+
+
+
+
+
+
+
+
+contract LiquidityPoolManager is ReentrancyGuard, Ownable, BaseRelayRecipient, Pausable {
+
+    using SafeMath for uint256;
+
+    address private constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 public baseGas;
+    
+    ExecutorManager private executorManager;
+    uint256 public adminFee;
+
+    struct TokenInfo {
+        uint256 transferOverhead;
+        bool supportedToken;
+        uint256 minCap;
+        uint256 maxCap;
+        uint256 liquidity;
+        mapping(address => uint256) liquidityProvider;
+    }
+
+     struct PermitRequest {
+        uint256 nonce;
+        uint256 expiry;
+        bool allowed; 
+        uint8 v;
+        bytes32 r; 
+        bytes32 s; 
+    }
+
+    mapping ( address => TokenInfo ) public tokensInfo;
+    mapping ( bytes32 => bool ) public processedHash;
+    mapping ( address => uint256 ) public gasFeeAccumulatedByToken;
+    mapping ( address => uint256 ) public adminFeeAccumulatedByToken;
+
+    event AssetSent(address indexed asset, uint256 indexed amount, uint256 indexed transferredAmount, address target, bytes depositHash);
+    event Received(address indexed from, uint256 indexed amount);
+    event Deposit(address indexed from, address indexed tokenAddress, address indexed receiver, uint256 toChainId, uint256 amount);
+    event LiquidityAdded(address indexed from, address indexed tokenAddress, address indexed receiver, uint256 amount);
+    event LiquidityRemoved(address indexed tokenAddress, uint256 indexed amount, address indexed sender);
+    event fundsWithdraw(address indexed tokenAddress, address indexed owner,  uint256 indexed amount);
+    event AdminFeeWithdraw(address indexed tokenAddress, address indexed owner,  uint256 indexed amount);
+    event GasFeeWithdraw(address indexed tokenAddress, address indexed owner,  uint256 indexed amount);
+    event AdminFeeChanged(uint256 indexed newAdminFee);
+    event TrustedForwarderChanged(address indexed forwarderAddress);
+    event EthReceived(address, uint);
+
+    modifier onlyExecutor() {
+
+        require(executorManager.getExecutorStatus(_msgSender()),
+            "You are not allowed to perform this operation"
+        );
+        _;
+    }
+
+    modifier tokenChecks(address tokenAddress){
+
+        require(tokenAddress != address(0), "Token address cannot be 0");
+        require(tokensInfo[tokenAddress].supportedToken, "Token not supported");
+
+        _;
+    }
+
+    constructor(address _executorManagerAddress, address owner, address pauser, address _trustedForwarder, uint256 _adminFee) Ownable(owner) Pausable(pauser) {
+        require(_executorManagerAddress != address(0), "ExecutorManager Contract Address cannot be 0");
+        require(_trustedForwarder != address(0), "TrustedForwarder Contract Address cannot be 0");
+        require(_adminFee != 0, "AdminFee cannot be 0");
+        executorManager = ExecutorManager(_executorManagerAddress);
+        trustedForwarder = _trustedForwarder;
+        adminFee = _adminFee;
+        baseGas = 21000;
+    }
+
+    function renounceOwnership() external override onlyOwner {
+
+        revert ("can't renounceOwnership here"); // not possible within this smart contract
+    }
+
+    function renouncePauser() external override onlyPauser {
+
+        revert ("can't renouncePauser here"); // not possible within this smart contract
+    }
+
+    function getAdminFee() public view returns (uint256 ) {
+
+        return adminFee;
+    }
+
+    function changeAdminFee(uint256 newAdminFee) external onlyOwner whenNotPaused {
+
+        require(newAdminFee != 0, "Admin Fee cannot be 0");
+        adminFee = newAdminFee;
+        emit AdminFeeChanged(newAdminFee);
+    }
+
+    function versionRecipient() external override virtual view returns (string memory){
+
+        return "1";
+    }
+
+    function setBaseGas(uint128 gas) external onlyOwner{
+
+        baseGas = gas;
+    }
+
+    function getExecutorManager() public view returns (address){
+
+        return address(executorManager);
+    }
+
+    function setExecutorManager(address _executorManagerAddress) external onlyOwner {
+
+        require(_executorManagerAddress != address(0), "Executor Manager Address cannot be 0");
+        executorManager = ExecutorManager(_executorManagerAddress);
+    }
+
+    function setTrustedForwarder( address forwarderAddress ) external onlyOwner {
+
+        require(forwarderAddress != address(0), "Forwarder Address cannot be 0");
+        trustedForwarder = forwarderAddress;
+        emit TrustedForwarderChanged(forwarderAddress);
+    }
+
+    function setTokenTransferOverhead( address tokenAddress, uint256 gasOverhead ) external tokenChecks(tokenAddress) onlyOwner {
+
+        tokensInfo[tokenAddress].transferOverhead = gasOverhead;
+    }
+
+    function addSupportedToken( address tokenAddress, uint256 minCapLimit, uint256 maxCapLimit ) external onlyOwner {
+
+        require(tokenAddress != address(0), "Token address cannot be 0");  
+        require(maxCapLimit > minCapLimit, "maxCapLimit cannot be smaller than minCapLimit");        
+        tokensInfo[tokenAddress].supportedToken = true;
+        tokensInfo[tokenAddress].minCap = minCapLimit;
+        tokensInfo[tokenAddress].maxCap = maxCapLimit;
+    }
+
+    function removeSupportedToken( address tokenAddress ) external tokenChecks(tokenAddress) onlyOwner {
+
+        tokensInfo[tokenAddress].supportedToken = false;
+    }
+
+    function updateTokenCap( address tokenAddress, uint256 minCapLimit, uint256 maxCapLimit ) external tokenChecks(tokenAddress) onlyOwner {
+
+        require(maxCapLimit > minCapLimit, "maxCapLimit cannot be smaller than minCapLimit");                
+        tokensInfo[tokenAddress].minCap = minCapLimit;        
+        tokensInfo[tokenAddress].maxCap = maxCapLimit;
+    }
+
+    function addNativeLiquidity() external payable whenNotPaused {
+
+        require(msg.value != 0, "Amount cannot be 0");
+        address payable sender = _msgSender();
+        tokensInfo[NATIVE].liquidityProvider[sender] = tokensInfo[NATIVE].liquidityProvider[sender].add(msg.value);
+        tokensInfo[NATIVE].liquidity = tokensInfo[NATIVE].liquidity.add(msg.value);
+
+        emit LiquidityAdded(sender, NATIVE, address(this), msg.value);
+    }
+
+    function removeNativeLiquidity(uint256 amount) external nonReentrant {
+
+        require(amount != 0 , "Amount cannot be 0");
+        address payable sender = _msgSender();
+        require(tokensInfo[NATIVE].liquidityProvider[sender] >= amount, "Not enough balance");
+        tokensInfo[NATIVE].liquidityProvider[sender] = tokensInfo[NATIVE].liquidityProvider[sender].sub(amount);
+        tokensInfo[NATIVE].liquidity = tokensInfo[NATIVE].liquidity.sub(amount);
+        
+        bool success = sender.send(amount);
+        require(success, "Native Transfer Failed");
+
+        emit LiquidityRemoved( NATIVE, amount, sender);
+    }
+
+    function addTokenLiquidity( address tokenAddress, uint256 amount ) external tokenChecks(tokenAddress) whenNotPaused {
+
+        require(amount != 0, "Amount cannot be 0");
+        address payable sender = _msgSender();
+        tokensInfo[tokenAddress].liquidityProvider[sender] = tokensInfo[tokenAddress].liquidityProvider[sender].add(amount);
+        tokensInfo[tokenAddress].liquidity = tokensInfo[tokenAddress].liquidity.add(amount);
+        
+        SafeERC20.safeTransferFrom(IERC20(tokenAddress), sender, address(this), amount);
+        emit LiquidityAdded(sender, tokenAddress, address(this), amount);
+    }
+
+    function removeTokenLiquidity( address tokenAddress, uint256 amount ) external tokenChecks(tokenAddress) {
+
+        require(amount != 0, "Amount cannot be 0");
+        address payable sender = _msgSender();
+        require(tokensInfo[tokenAddress].liquidityProvider[sender] >= amount, "Not enough balance");
+
+        tokensInfo[tokenAddress].liquidityProvider[sender] = tokensInfo[tokenAddress].liquidityProvider[sender].sub(amount);
+        tokensInfo[tokenAddress].liquidity = tokensInfo[tokenAddress].liquidity.sub(amount);
+
+        SafeERC20.safeTransfer(IERC20(tokenAddress), sender, amount);
+        emit LiquidityRemoved( tokenAddress, amount, sender);
+
+    }
+
+    function getLiquidity(address liquidityProviderAddress, address tokenAddress) public view returns (uint256 ) {
+
+        return tokensInfo[tokenAddress].liquidityProvider[liquidityProviderAddress];
+    }
+
+    function depositErc20( address tokenAddress, address receiver, uint256 amount, uint256 toChainId ) public tokenChecks(tokenAddress) whenNotPaused {
+
+        require(tokensInfo[tokenAddress].minCap <= amount && tokensInfo[tokenAddress].maxCap >= amount, "Deposit amount should be within allowed Cap limits");
+        require(receiver != address(0), "Receiver address cannot be 0");
+        require(amount != 0, "Amount cannot be 0");
+
+        address payable sender = _msgSender();
+
+        SafeERC20.safeTransferFrom(IERC20(tokenAddress), sender, address(this),amount);
+        emit Deposit(sender, tokenAddress, receiver, toChainId, amount);
+    }
+
+    function permitAndDepositErc20(
+        address tokenAddress,
+        address receiver,
+        uint256 amount,
+        uint256 toChainId,
+        PermitRequest calldata permitOptions
+        )
+        external {
+
+            IERC20Permit(tokenAddress).permit(_msgSender(), address(this), permitOptions.nonce, permitOptions.expiry, permitOptions.allowed, permitOptions.v, permitOptions.r, permitOptions.s);
+            depositErc20(tokenAddress, receiver, amount, toChainId);
+    }
+
+    function permitEIP2612AndDepositErc20(
+        address tokenAddress,
+        address receiver,
+        uint256 amount,
+        uint256 toChainId,
+        PermitRequest calldata permitOptions
+        )
+        external {
+
+            IERC20Permit(tokenAddress).permit(_msgSender(), address(this), amount, permitOptions.expiry, permitOptions.v, permitOptions.r, permitOptions.s);
+            depositErc20(tokenAddress, receiver, amount, toChainId);            
+    }
+
+    function depositNative( address receiver, uint256 toChainId ) external whenNotPaused payable {
+
+        require(tokensInfo[NATIVE].minCap <= msg.value && tokensInfo[NATIVE].maxCap >= msg.value, "Deposit amount should be within allowed Cap limit");
+        require(receiver != address(0), "Receiver address cannot be 0");
+        require(msg.value != 0, "Amount cannot be 0");
+
+        emit Deposit(_msgSender(), NATIVE, receiver, toChainId, msg.value);
+    }
+
+    function sendFundsToUser( address tokenAddress, uint256 amount, address payable receiver, bytes memory depositHash, uint256 tokenGasPrice ) external nonReentrant onlyExecutor tokenChecks(tokenAddress) whenNotPaused {
+
+        uint256 initialGas = gasleft();
+        require(tokensInfo[tokenAddress].minCap <= amount && tokensInfo[tokenAddress].maxCap >= amount, "Withdraw amount should be within allowed Cap limits");
+        require(receiver != address(0), "Bad receiver address");
+
+        (bytes32 hashSendTransaction, bool status) = checkHashStatus(tokenAddress, amount, receiver, depositHash);
+
+        require(!status, "Already Processed");
+        processedHash[hashSendTransaction] = true;
+
+        uint256 calculateAdminFee = amount.mul(adminFee).div(10000);
+
+        adminFeeAccumulatedByToken[tokenAddress] = adminFeeAccumulatedByToken[tokenAddress].add(calculateAdminFee); 
+
+        uint256 totalGasUsed = (initialGas.sub(gasleft()));
+        totalGasUsed = totalGasUsed.add(tokensInfo[tokenAddress].transferOverhead);
+        totalGasUsed = totalGasUsed.add(baseGas);
+
+        gasFeeAccumulatedByToken[tokenAddress] = gasFeeAccumulatedByToken[tokenAddress].add(totalGasUsed.mul(tokenGasPrice));
+        uint256 amountToTransfer = amount.sub(calculateAdminFee.add(totalGasUsed.mul(tokenGasPrice)));
+
+        if (tokenAddress == NATIVE) {
+            require(address(this).balance >= amountToTransfer, "Not Enough Balance");
+            bool success = receiver.send(amountToTransfer);
+            require(success, "Native Transfer Failed");
+        } else {
+            require(IERC20(tokenAddress).balanceOf(address(this)) >= amountToTransfer, "Not Enough Balance");
+            SafeERC20.safeTransfer(IERC20(tokenAddress), receiver, amountToTransfer);
+        }
+
+        emit AssetSent(tokenAddress, amount, amountToTransfer, receiver, depositHash);
+    }
+
+    function checkHashStatus(address tokenAddress, uint256 amount, address payable receiver, bytes memory depositHash) public view returns(bytes32 hashSendTransaction, bool status){
+
+        hashSendTransaction = keccak256(
+            abi.encode(
+                tokenAddress,
+                amount,
+                receiver,
+                keccak256(depositHash)
+            )
+        );
+
+        status = processedHash[hashSendTransaction];
+    }
+
+    function withdrawErc20(address tokenAddress) external onlyOwner whenNotPaused {
+
+        uint256 profitEarned = (IERC20(tokenAddress).balanceOf(address(this)))
+                                .sub(tokensInfo[tokenAddress].liquidity)
+                                .sub(adminFeeAccumulatedByToken[tokenAddress])
+                                .sub(gasFeeAccumulatedByToken[tokenAddress]);
+        require(profitEarned != 0, "Profit earned is 0");
+        address payable sender = _msgSender();
+
+        SafeERC20.safeTransfer(IERC20(tokenAddress), sender, profitEarned);
+
+        emit fundsWithdraw(tokenAddress, sender,  profitEarned);
+    }
+
+    function withdrawErc20AdminFee(address tokenAddress, address receiver) external onlyOwner whenNotPaused {
+
+        require(tokenAddress != NATIVE, "Use withdrawNativeAdminFee() for native token");
+        uint256 adminFeeAccumulated = adminFeeAccumulatedByToken[tokenAddress];
+        require(adminFeeAccumulated != 0, "Admin Fee earned is 0");
+
+        adminFeeAccumulatedByToken[tokenAddress] = 0;
+
+        SafeERC20.safeTransfer(IERC20(tokenAddress), receiver, adminFeeAccumulated);
+        emit AdminFeeWithdraw(tokenAddress, receiver, adminFeeAccumulated);
+    }
+
+    function withdrawErc20GasFee(address tokenAddress, address receiver) external onlyOwner whenNotPaused {
+
+        require(tokenAddress != NATIVE, "Use withdrawNativeGasFee() for native token");
+        uint256 gasFeeAccumulated = gasFeeAccumulatedByToken[tokenAddress];
+        require(gasFeeAccumulated != 0, "Gas Fee earned is 0");
+
+        gasFeeAccumulatedByToken[tokenAddress] = 0;
+
+        SafeERC20.safeTransfer(IERC20(tokenAddress), receiver, gasFeeAccumulated);
+        emit GasFeeWithdraw(tokenAddress, receiver, gasFeeAccumulated);
+    }
+
+    function withdrawNative() external onlyOwner whenNotPaused {
+
+        uint256 profitEarned = (address(this).balance)
+                                .sub(tokensInfo[NATIVE].liquidity)
+                                .sub(adminFeeAccumulatedByToken[NATIVE])
+                                .sub(gasFeeAccumulatedByToken[NATIVE]);
+        
+        require(profitEarned != 0, "Profit earned is 0");
+
+        address payable sender = _msgSender();
+        bool success = sender.send(profitEarned);
+        require(success, "Native Transfer Failed");
+        
+        emit fundsWithdraw(address(this), sender, profitEarned);
+    }
+
+    function withdrawNativeAdminFee(address payable receiver) external onlyOwner whenNotPaused {
+
+        uint256 adminFeeAccumulated = adminFeeAccumulatedByToken[NATIVE];
+        require(adminFeeAccumulated != 0, "Admin Fee earned is 0");
+        adminFeeAccumulatedByToken[NATIVE] = 0;
+        bool success = receiver.send(adminFeeAccumulated);
+        require(success, "Native Transfer Failed");
+        
+        emit AdminFeeWithdraw(address(this), receiver, adminFeeAccumulated);
+    }
+
+    function withdrawNativeGasFee(address payable receiver) external onlyOwner whenNotPaused {
+
+        uint256 gasFeeAccumulated = gasFeeAccumulatedByToken[NATIVE];
+        require(gasFeeAccumulated != 0, "Gas Fee earned is 0");
+        gasFeeAccumulatedByToken[NATIVE] = 0;
+        bool success = receiver.send(gasFeeAccumulated);
+        require(success, "Native Transfer Failed");
+        
+        emit GasFeeWithdraw(address(this), receiver, gasFeeAccumulated);
+    }
+
+    receive() external payable {
+        emit EthReceived(_msgSender(), msg.value);
+    }
+}
