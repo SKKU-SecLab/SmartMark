@@ -1,0 +1,22 @@
+The installation instruction is as follows:
+  $ git clone https://github.com/smartmarker/SmartMark.git
+  $ cd SmartMark/SmartMark
+  $ python3 main.py [flags]
+  
+If the watermark embedding and verification completed successfully, you will get the message below:
+  - [EMBEDDING SUCCEED] This contract has been successfully watermarked. (see {your_WRO_path_here}) and {your_WROMAC_path_here})
+  - [VERIFIED] This contract has been succesfully verified by given WRO. (see {your_result_path_here})
+  - [NOT VERIFIED] This contract cannot be verified by given WRO. (see {your_result_path_here})
+The path of output file also can be obtained from the message ('see {your_path}' part)
+
+If there is any missing required input, you will get the message below:
+  - [Failed] You have to give both the length (flag: -L or --length) and the number (flag: -N or --number) of watermark(s) to be embedded.
+  - [Failed] You have to give the paths of both WRO (flag: -W or --WRO) and WROMAC (flag: -M or --WROMAC)
+  - [Failed] You have to give both the path of the EtherSolve tool (flag: -B or --CFG-builder) and the path of a contract runtime bytecode (flag: -R or --bin_runtime)
+  - [Failed] You have to give the path of the CFG of a contract runtime bytecode (flag: -I or --CFG)
+  
+If the error defined in the ErrorHandler module is triggerd, you will get the message below:
+  - ErrorHandler.InSufficientContractSize: This contract has insufficient number of CFG blocks ({your_contract_blockNum}) to be watermarked. Please use smaller length and number of watermark(s) that the (length * number) does not exceed {your_contract_blockNum}.
+  - ErrorHandler.InvalidWROMAC: This contract cannot be verified by given invalid WROMAC.
+
+
