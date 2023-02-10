@@ -29,8 +29,12 @@ We have confirmed that SmartMark can be executed on a 64-bit Ubuntu 18.04 system
   (sudo apt install openjdk-11-jdk)
 
 - Download the executable EtherSolve (https://github.com/SeUniVr/EtherSolve_ICPC2021_ReplicationPackage.git) Jar file
+  
   (EtherSolve builds the control flow graph of a smart contract, which is used as input of *SmartMark*)
+  
   (The official EtherSolve tool has been tested with Java 11.0.8, so we believe that version or about will technically do)
+
+<br>
 
 To execute the *SmartMark* program, the pycryptodome python package needs to be installed. The installation command is as follows:
 
@@ -62,7 +66,8 @@ SmartMark
 ```
 
 *SmartMark* can be run with the `python3 main.py [flags]` command.
-See the INSTALL File for examples commands and exepected input and output.
+
+See the INSTALL File for example commands and exepected input and output.
 
 **Arguments:**
 
@@ -133,7 +138,8 @@ If the verification process successfully completed, it shows the message below:
 
 ```markdown
 [VERIFIED]
-This contract has been succesfully verified by given WRO. (see {your_result_path_here})
+This contract has been succesfully verified by given WRO. (
+{your_result_path_here})
 ```
 
 If the verification process successfully completed but the contract is failed to be verified by the given WRO, it shows the message below:
