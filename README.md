@@ -20,17 +20,23 @@ Hyoungshick Kim <[hyoung@skku.edu](mailto:hyoung@skku.edu)> *- Sungkyunkwan Univ
 <br>
 
 ## Requirements
-- Install Python3
-- Install Java
-- Install [EtherSolve](https://github.com/SeUniVr/EtherSolve_ICPC2021_ReplicationPackage.git) (EtherSolve builds the control flow graph of a smart contract, which is used as input of *SmartMark*)
+We have confirmed that SmartMark can be executed on a 64-bit Ubuntu 18.04 system with Python3.9 and Java 11.0.17.
+
+- Install Python3.9 
+  (sudo apt install python3.9)
+
+- Install Java >= 11.0.8 
+  (sudo apt install openjdk-11-jdk)
+
+- Download the executable EtherSolve (https://github.com/SeUniVr/EtherSolve_ICPC2021_ReplicationPackage.git) Jar file
+  (EtherSolve builds the control flow graph of a smart contract, which is used as input of *SmartMark*)
+  (The official EtherSolve tool has been tested with Java 11.0.8, so we believe that version or about will technically do)
 
 To execute the *SmartMark* program, the pycryptodome python package needs to be installed. The installation command is as follows:
 
 ```bash
 pip3 install pycryptodome
 ```
-
-We have confirmed that *SmartMark* can be executed on a 64-bit Ubuntu 18.04 system with Python3.9.
 
 
 ## Installation
@@ -56,6 +62,7 @@ SmartMark
 ```
 
 *SmartMark* can be run with the `python3 main.py [flags]` command.
+See the INSTALL File for examples commands and exepected input and output.
 
 **Arguments:**
 

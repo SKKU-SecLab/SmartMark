@@ -2,7 +2,66 @@ The installation instruction is as follows:
   $ git clone https://github.com/smartmarker/SmartMark.git
   $ cd SmartMark/SmartMark
   $ python3 main.py [flags]
+
+
+[COMMAND and INPUT/OUTPUT EXAMPLES]
+  1-1. When you already have a CFG built from your contract, and want to embed watermark(s):
+    **************************************************************************
+     $ python3 main.py -L 15 -N 3 -I samples/EthealPromoToken_CFG.json \
+      -W output/EthealPromoToken.wro \
+      -M output/EthealPromoToken.wromac
   
+    Do you wanna embed or verify the watermark(s)? (embed:1, verify:0) [0/1] : 1
+    Build CFG from a runtime bytecode? (It you already have one, just select 'n') [y/n] : n
+  
+    [EMBEDDING SUCCEED]
+    This contract has been successfully watermarked. (see output/EthealPromoToken.wro and output/EthealPromoToken.wromac)
+    **************************************************************************
+  
+  1-2. When you already have a CFG built from your contract, and want to verify watermark(s):
+    **************************************************************************
+     $ python3 main.py -I samples/EthealPromoToken_CFG.json \
+      -W output/EthealPromoToken.wro \
+      -M output/EthealPromoToken.wromac \
+      -V output/EthealPromoToken.result
+  
+    Do you wanna embed or verify the watermark(s)? (embed:1, verify:0) [0/1] : 0
+    Build CFG from a runtime bytecode? (It you already have one, just select 'n') [y/n] : n
+  
+    [VERIFIED]
+  This contract has been succesfully verified by given WRO. (see output/EthealPromoToken.result)
+    **************************************************************************
+  
+  
+  2-1. When you have to build a CFG from your contract, and want to embed watermark(s):
+    **************************************************************************
+     $ python3 main.py -L 15 -N 3 -B /your/EtherSolve/path -R samples/EthealPromoToken.bin-runtime \
+      -W output/EthealPromoToken.wro \
+      -M output/EthealPromoToken.wromac
+  
+    Do you wanna embed or verify the watermark(s)? (embed:1, verify:0) [0/1] : 1
+    Build CFG from a runtime bytecode? (It you already have one, just select 'n') [y/n] : y
+  
+    [EMBEDDING SUCCEED]
+    This contract has been successfully watermarked. (see output/EthealPromoToken.wro and output/EthealPromoToken.wromac)
+    **************************************************************************
+  
+  2-1. When you have to build a CFG from your contract, and want to verify watermark(s):
+    **************************************************************************
+     $ python3 main.py -L 15 -N 3 -B /your/EtherSolve/path -R samples/EthealPromoToken.bin-runtime \
+      -W output/EthealPromoToken.wro \
+      -M output/EthealPromoToken.wromac
+  
+    Do you wanna embed or verify the watermark(s)? (embed:1, verify:0) [0/1] : 0
+    Build CFG from a runtime bytecode? (It you already have one, just select 'n') [y/n] : y
+  
+    [EMBEDDING SUCCEED]
+    This contract has been successfully watermarked. (see output/EthealPromoToken.wro and output/EthealPromoToken.wromac)
+    **************************************************************************
+
+
+[MESSAGES]
+
 If the watermark embedding and verification completed successfully, you will get the message below:
   - [EMBEDDING SUCCEED] This contract has been successfully watermarked. (see {your_WRO_path_here}) and {your_WROMAC_path_here})
   - [VERIFIED] This contract has been succesfully verified by given WRO. (see {your_result_path_here})
@@ -18,5 +77,3 @@ If there is any missing required input, you will get the message below:
 If the error defined in the ErrorHandler module is triggerd, you will get the message below:
   - ErrorHandler.InSufficientContractSize: This contract has insufficient number of CFG blocks ({your_contract_blockNum}) to be watermarked. Please use smaller length and number of watermark(s) that the (length * number) does not exceed {your_contract_blockNum}.
   - ErrorHandler.InvalidWROMAC: This contract cannot be verified by given invalid WROMAC.
-
-
